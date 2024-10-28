@@ -1,8 +1,8 @@
-const { Model, DataTypes } = require("sequelize");
-const { sequelize } = require("../utils/db");
-const User = require("./user");
-class UserAllergy extends Model {}
-UserAllergy.init(
+const {Model, DataTypes} = require("sequelize")
+const {sequelize} = require("../utils/db")
+const Dish = require("./dish")
+class DishAllergy extends Model {}
+DishAllergy.init(
   {
     id: {
       allowNull: false,
@@ -10,10 +10,10 @@ UserAllergy.init(
       primaryKey: true,
       type: DataTypes.INTEGER,
     },
-    userId: {
+    dishId: {
       type: DataTypes.INTEGER,
       references: {
-        model: User,
+        model: Dish,
         key: "id",
       },
       onUpdate: "CASCADE",
@@ -33,11 +33,12 @@ UserAllergy.init(
     },
   },
   {
+    // sequelize,
     sequelize,
     underscored: true,
     timestamps: true,
-    modelName: "UserAllergy",
+    modelName: "DishAllergy",
   }
-);
+)
 
-module.exports = UserAllergy;
+module.exports = DishAllergy

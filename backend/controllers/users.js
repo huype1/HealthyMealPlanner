@@ -1,28 +1,10 @@
 const bcrypt = require("bcrypt");
 const router = require("express").Router();
-const { User, UserAllergy } = require("../models");
+const { User, UserAllergy, Dish, DishAllergy } = require("../models");
 const { sequelize } = require("../utils/db");
-//middleware
-const userFinder = async (req, res, next) => {
-  req.user = await User.findByPk(req.params.id, {
-    include: [
-      {
-        model: UserAllergy,
-        attributes: ["allergy"],
-      },
-    ],
-  });
-  next();
-};
-router.get("/", async (req, res) => {
-  const users = await User.findAll({
-    include: {
-      model: UserAllergy,
-      attributes: ["allergy"],
-    },
-  });
-  res.json(users);
-});
+const { Op, where } = require("sequelize");
+const { userFinder, tokenValidate, isAdmin } = require("../utils/middleware");
+//user specific function
 
 router.post("/", async (req, res) => {
   const { allergies, ...userData } = req.body;
@@ -43,8 +25,10 @@ router.post("/", async (req, res) => {
       );
       await Promise.all(allergyPromises);
     }
-    const objectAllergies = allergies ? allergies.map((allergy) => ({ allergy })) : [];
-    
+    const objectAllergies = allergies
+      ? allergies.map((allergy) => ({ allergy }))
+      : [];
+
     await transaction.commit();
     res.status(201).json({ ...user.toJSON(), UserAllergies: objectAllergies });
   } catch (error) {
@@ -53,20 +37,25 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.get("/:id", userFinder, async (req, res) => {
+router.get("/:id", tokenValidate, userFinder, async (req, res) => {
+  const { id } = req.params;
   if (req.user) {
-    res.json(req.user);
-  } else {
-    res.status(404).end();
+    if (
+      parseInt(id) !== parseInt(req.user.id) ||
+      req.session.status !== "admin"
+    ) {
+      res.status(401);
+    }
+    res.status(200).json(req.user);
   }
+  res.status(404).end();
 });
 
-router.put("/:id", userFinder, async (req, res) => {
+router.put("/:id", tokenValidate, userFinder, async (req, res) => {
   const transaction = await sequelize.transaction();
   if (req.user) {
     try {
       const {
-        fullName,
         weight,
         height,
         age,
@@ -74,9 +63,9 @@ router.put("/:id", userFinder, async (req, res) => {
         activityLevel,
         weightGoal,
         targetCalories,
-        allergies,
+        UserAllergies,
       } = req.body;
-
+      const allergies = UserAllergies.map(al => al.allergy);
       const user = await User.findByPk(req.params.id, { transaction });
 
       user.weight = weight;
@@ -101,13 +90,14 @@ router.put("/:id", userFinder, async (req, res) => {
         await Promise.all(allergyPromises);
       }
 
-      const objectAllergies = allergies ? allergies.map((allergy) => ({ allergy })) : [];
+      const objectAllergies = allergies
+        ? allergies.map((allergy) => ({ allergy }))
+        : [];
 
       await transaction.commit();
       res.json({ ...user.toJSON(), UserAllergies: objectAllergies });
     } catch (error) {
       await transaction.rollback();
-      console.error(error);
       res.status(500).json({ error: error.message });
     }
   } else {
@@ -115,8 +105,7 @@ router.put("/:id", userFinder, async (req, res) => {
   }
 });
 
-
-router.delete("/:id", userFinder, async (req, res) => {
+router.delete("/:id", tokenValidate, userFinder, async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
@@ -129,10 +118,79 @@ router.delete("/:id", userFinder, async (req, res) => {
   }
 });
 
+//admin function only
+router.get("/", tokenValidate, isAdmin, async (req, res) => {
+  const { page = 1, search = "", group = "", limit = 2 } = req.query;
+  const offset = (page - 1) * limit;
+  let whereClause = {};
+  const searchValue = search.trim();
+  if (searchValue !== "") {
+    whereClause = {
+      [Op.or]: [
+        { userName: { [Op.iLike]: `%${searchValue}%` } },
+        { fullName: { [Op.iLike]: `%${searchValue}%` } },
+        { email: { [Op.iLike]: `%${searchValue}%` } },
+      ],
+    };
+  }
+
+  if (group === "admin" || group === "active" || group === "locked") {
+    whereClause = {
+      ...whereClause,
+      [Op.and]: [{ status: group }],
+    };
+  }
+  try {
+    const { count, rows } = await User.findAndCountAll({
+      where: whereClause,
+      offset,
+      limit,
+      distinct: true,
+      order: [["id", "ASC"]],
+      include: [
+        {
+          model: UserAllergy,
+          attributes: ["allergy"],
+          required: false,
+        },
+      ],
+    });
+    const totalPages = Math.ceil(count / limit);
+    res.json({ users: rows, totalPages });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.put("/status/:userId", tokenValidate, isAdmin, async (req, res) => {
+  const { userId } = req.params;
+  const { status } = req.body;
+
+  try {
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (!["active", "locked", "admin"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    user.status = status;
+    await user.save();
+
+    res.status(200).json({ message: "user status updated", user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to update user status" });
+  }
+});
+//allergy table function
 router.get("/:userId/allergies", async (req, res) => {
   const { userId } = req.params;
   const userAllergies = await UserAllergy.findAll({
-    where: { user_id: userId },
+    where: { userId: userId },
   });
 
   res.json(userAllergies);
@@ -140,15 +198,13 @@ router.get("/:userId/allergies", async (req, res) => {
 
 router.put("/:userId/allergies", async (req, res) => {
   const { userId } = req.params;
-  const { allergies } = req.body; // Expecting an array of allergy types
+  const { allergies } = req.body;
 
   try {
-    // Delete existing allergies
     await UserAllergy.destroy({
-      where: { user_id: userId },
+      where: { userId: userId },
     });
 
-    // Add new allergies
     const allergyPromises = allergies.map((allergy) =>
       UserAllergy.create({ userId: userId, allergy })
     );
@@ -160,4 +216,21 @@ router.put("/:userId/allergies", async (req, res) => {
   }
 });
 
+router.get("/:userId/dishes", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const userDishes = await Dish.findAll(
+      {
+        include: {
+          model: DishAllergy,
+          attributes: ["allergy"],
+        },
+      },
+      { where: { userId: userId } }
+    );
+    res.json(userDishes);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
 module.exports = router;

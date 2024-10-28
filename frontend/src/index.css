@@ -1,0 +1,50 @@
+#root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  padding-bottom: 0px;
+  margin-bottom: 0px;
+
+}
+.custom-input {
+  border: 2px solid gray; /* Custom border color */
+  border-radius: 5px; /* Rounded corners */
+}
+
+.custom-input:focus {
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Shadow on focus */
+}
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+  border-color: gray; /* Custom checked border color */
+  background-color: #007bff; /* Background color when checked */
+}
+
+.custom-checkbox .custom-control-label::before {
+  border: 2px solid gray; /* Custom border color */
+}
+.custom-link {
+  color: gray;
+  text-decoration: none; /* Remove underline */
+}
+
+.custom-link:hover {
+  color: #007bff;
+  text-decoration: underline; /* Underline on hover */
+}
+.hero-section {
+  background: linear-gradient(45deg, #0056b3, #007bff);
+}
+
+.dish-carousel .carousel-item img {
+  object-fit: cover;
+  height: 400px;
+}
+
+.dish-carousel .carousel-caption {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+}
+
+
+

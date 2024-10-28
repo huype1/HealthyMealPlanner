@@ -1,20 +1,19 @@
-const { Sequelize } = require('sequelize');
-const { DATABASE, USER, PASSWORD, HOST, DB_PORT } = require('./config')
+
+const { Sequelize } = require("sequelize");
+
+const { DATABASE, USER, PASSWORD, HOST, DB_PORT } = require("./config");
 // const { Umzug, SequelizeStorage } = require('umzug')
 
 const sequelize = new Sequelize(DATABASE, USER, PASSWORD, {
-  dialect: 'postgres',
+  dialect: "postgres",
   host: HOST,
   port: DB_PORT,
   logging: false,
   dialectOptions: {
     ssl: false,
-    clientMinMessages: 'ignore',
+    clientMinMessages: "ignore",
   },
-
 });
-
-
 
 async function connectToDatabase() {
   try {
@@ -23,10 +22,11 @@ async function connectToDatabase() {
     // await runMigrations();
   } catch (error) {
     console.error("Unable to connect to the database:", error);
-    return process.exit(1)
+    return process.exit(1);
   }
-  return null
+  return null;
 }
 module.exports = {
-  sequelize, connectToDatabase
-}
+  sequelize,
+  connectToDatabase,
+};

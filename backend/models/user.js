@@ -1,5 +1,6 @@
 const { Model, DataTypes } = require("sequelize");
 const { sequelize } = require("../utils/db");
+const isEmail = require("validator/lib/isEmail")
 class User extends Model {}
 
 User.init(
@@ -22,8 +23,12 @@ User.init(
       type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
+      validate: {
+        isEmail: true,
+      }
     },
     passwordHash: {
+      //validate this on the frontend side with regex
       type: DataTypes.STRING(255),
       allowNull: false,
     },
@@ -47,6 +52,10 @@ User.init(
       defaultValue: "active",
     },
     targetCalories: DataTypes.INTEGER,
+    infoCompleted: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
   },
   {
     sequelize,
