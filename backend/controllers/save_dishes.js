@@ -4,44 +4,34 @@ const {
   Dish,
   DishAllergy,
   User,
-  UserAllergy,
   SavedDish,
 } = require("../models");
 const { sequelize } = require("../utils/db");
-const { isAdmin, tokenValidate } = require("../utils/middleware");
+const { tokenValidate } = require("../utils/middleware");
 
 //create, read and delete the saved dishes.
+//check if user save the dish or not
 router.get("/:userId/:dishId", async (req, res) => {
   try {
     const { userId, dishId } = req.params;
-    const user = await User.findByPk(userId, {
-      include: [
-        {
-          model: Dish,
-          through: SavedDish,
-          where: {
-            id: {
-              [Op.eq]: dishId,
-            },
-          },
-          include: [
-            {
-              model: DishAllergy,
-              attributes: ["allergy"],
-            },
-          ],
-        },
-      ],
-    });
 
-    if (!user) {
+    const userExists = await User.findByPk(userId);
+    if (!userExists) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json(user.dishes);
+    const isDishSaved = await SavedDish.findOne({
+      where: {
+        userId: userId,
+        dishId: dishId,
+      },
+    });
+
+    const isSaved = !!isDishSaved;
+    res.status(200).json({ isSaved });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Can't find saved dishes from users" });
+    res.status(500).json({ error: "An error occurred while checking saved dishes." });
   }
 });
 
@@ -60,9 +50,14 @@ router.get("/:userId", tokenValidate, async (req, res) => {
       limit = 10,
     } = req.query;
 
-    const offset = (page - 1) * limit;
-    let whereClause = {};
+    const userExists = await User.findByPk(parseInt(userId));
+    if (!userExists) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
+    const offset = (page - 1) * parseInt(limit);
+    let whereClause = {};
+    
     if (name) {
       whereClause.name = { [Op.iLike]: `%${name.toLowerCase()}%` };
     }
@@ -81,76 +76,80 @@ router.get("/:userId", tokenValidate, async (req, res) => {
       whereClause.diet = diet;
     }
 
-    let includeClause = [
-      {
-        model: Dish,
-        through: SavedDish,
-        where: whereClause,
-        include: [
-          {
-            model: DishAllergy,
-            attributes: ["allergy"],
-          },
-        ],
-      },
-    ];
 
+    let excludeDishIds = [];
     if (allergies) {
       const allergyList = allergies.split(",");
-
       const savedDishIds = await SavedDish.findAll({
         attributes: ["dishId"],
-        where: { userId },
-      }).then((saved) => saved.map((s) => s.dishId));
+        where: { userId: parseInt(userId) },
+      }).then(saved => saved.map(s => s.dishId));
 
-      const dishIdsWithAllergies = await DishAllergy.findAll({
-        attributes: ["dishId"],
-        where: {
-          allergy: { [Op.in]: allergyList },
-          dishId: { [Op.in]: savedDishIds },
-        },
-        group: ["dishId"],
-      }).then((results) => results.map((result) => result.dishId));
+      if (savedDishIds.length > 0) {
+        excludeDishIds = await DishAllergy.findAll({
+          attributes: ["dishId"],
+          where: {
+            allergy: { [Op.in]: allergyList },
+            dishId: { [Op.in]: savedDishIds },
+          },
+          group: ["dishId"],
+        }).then(results => results.map(result => result.dishId));
 
-      includeClause[0].where.id = { [Op.notIn]: dishIdsWithAllergies };
+        if (excludeDishIds.length > 0) {
+          whereClause.id = { [Op.notIn]: excludeDishIds };
+        }
+      }
     }
 
-    const totalCount = await User.count({
-      where: { id: userId },
-      include: [
-        {
-          model: Dish,
-          through: SavedDish,
-          where: whereClause,
-          required: true,
+    // Get total count first
+    const totalCount = await User.findOne({
+      where: { id: parseInt(userId) },
+      attributes: [[sequelize.fn('COUNT', sequelize.col('dishes.id')), 'dishCount']],
+      include: [{
+        model: Dish,
+        attributes: [],
+        through: { attributes: [] },
+        where: whereClause,
+        required: true
+      }],
+      raw: true
+    }).then(result => result?.dishCount || 0);
+
+
+    const user = await User.findOne({
+      where: { id: parseInt(userId) },
+      include: [{
+        model: Dish,
+        through: { 
+          model: SavedDish,
+          attributes: []
         },
-      ],
-      distinct: true,
-    }); 
-    console.log(userId, totalCount)
-    const user = await User.findByPk(userId, {
-      include: includeClause,
-      limit,
+        where: whereClause,
+        include: [{
+          model: DishAllergy,
+          attributes: ["allergy"]
+        }],
+        required: false
+      }],
+      limit: parseInt(limit),
       offset,
-      distinct: true,
+      subQuery: false
     });
-    console.log(user)
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
 
-    const totalPages = Math.ceil(totalCount / limit);
-
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+    
     res.json({
-      dishes: user.dishes,
+      dishes: user?.dishes || [],
       totalPages,
       currentPage: parseInt(page),
     });
+
   } catch (error) {
-    console.error(error);
+    console.error('Error:', error);
     res.status(500).json({ error: "Can't find saved dishes from users" });
   }
 });
+
 router.delete("/:userId/:dishId", tokenValidate, async (req, res) => {
   const { userId, dishId } = req.params;
   console.log(req.decodedToken);
@@ -173,7 +172,6 @@ router.delete("/:userId/:dishId", tokenValidate, async (req, res) => {
 
 router.post("/", async (req, res) => {
   const { userId, dishId } = req.body;
-
   try {
     const newDish = await SavedDish.create({ userId, dishId });
 

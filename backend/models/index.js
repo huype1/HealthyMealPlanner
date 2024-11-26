@@ -6,27 +6,56 @@ const SavedDish = require("./saved_dish");
 const Session = require("./session");
 const MealPlan = require("./meal_plan");
 const MealPlanDish = require("./meal_plan_dishes");
+const Comment = require("./comment");
+const Recipe = require("./recipe");
 User.hasMany(UserAllergy);
-UserAllergy.belongsTo(User);
-User.hasMany(Dish);
-Dish.belongsTo(User, {
-  onDelete: 'SET NULL'
+UserAllergy.belongsTo(User, {
+  foreignKey: 'userId',
+  onDelete: 'CASCADE',
 });
+User.hasMany(Dish, { foreignKey: 'userId' });
+Dish.belongsTo(User, {
+  foreignKey: 'userId',
+  onDelete: 'CASCADE',
+});
+
 Dish.hasMany(DishAllergy);
 DishAllergy.belongsTo(Dish);
 
 User.belongsToMany(Dish, { through: SavedDish });
 Dish.belongsToMany(User, { through: SavedDish });
 
-User.hasMany(MealPlan);
-MealPlan.belongsTo(User);
+User.hasMany(MealPlan, { foreignKey: 'userId' });
+MealPlan.belongsTo(User, {
+  foreignKey: 'userId',
+  onDelete: 'CASCADE',
+});
 
 MealPlan.belongsToMany(Dish, {
   through: MealPlanDish,
   foreignKey: "mealPlanId",
 });
 Dish.belongsToMany(MealPlan, { through: MealPlanDish, foreignKey: "dishId" });
+
 User.hasMany(Session, { foreignKey: "userId" });
+
+User.hasMany(Comment, { foreignKey: 'userId' });
+Comment.belongsTo(User, {
+  foreignKey: 'userId',
+  onDelete: 'CASCADE',
+});
+Dish.hasMany(Comment, { foreignKey: 'dishId'});
+Comment.belongsTo(Dish, {
+  foreignKey: 'dishId',
+  onDelete: 'CASCADE',
+});
+
+Dish.hasMany(Recipe, {foreignKey: 'dishId'});
+Recipe.belongsTo(Dish, {
+  foreignKey: 'dishId',
+  onDelete: 'CASCADE',
+});
+
 (async () => {
   await SavedDish.sync({ alter: true });
   await UserAllergy.sync({ alter: true });
@@ -36,6 +65,8 @@ User.hasMany(Session, { foreignKey: "userId" });
   await Session.sync({ alter: true });
   await MealPlan.sync({ alter: true });
   await MealPlanDish.sync({ alter: true });
+  await Comment.sync({alter: true});
+  await Recipe.sync({alter: true})
 })();
 
 module.exports = {
@@ -47,4 +78,6 @@ module.exports = {
   Session,
   MealPlan,
   MealPlanDish,
+  Comment,
+  Recipe,
 };

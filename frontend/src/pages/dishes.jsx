@@ -5,8 +5,8 @@ import CustomSpinner from "../components/CustomSpinner";
 import Pagination from "../components/Pagination";
 import DishesFilter from "../components/DishesFilter";
 import DishCard from "../components/DishCard";
-import { Link } from "react-router-dom";
 
+import debounce from "lodash/debounce";
 const DishesPage = () => {
   const [dishes, setDishes] = useState(null);
   const [totalPages, setTotalPages] = useState(1);
@@ -21,7 +21,8 @@ const DishesPage = () => {
     cuisine: "",
   });
 
-  const fetchDishes = async () => {
+
+  const debouncedfetchDishes = debounce(async () => {
     const result = await dishesService.getAll(
       filters.diet,
       filters.allergies,
@@ -35,10 +36,10 @@ const DishesPage = () => {
     console.log(result);
     setDishes(result.dishes);
     setTotalPages(result.totalPages);
-  };
+  }, 500);
 
   useEffect(() => {
-    fetchDishes();
+    debouncedfetchDishes();
   }, [currentPage, filters]);
 
   if (!dishes) {

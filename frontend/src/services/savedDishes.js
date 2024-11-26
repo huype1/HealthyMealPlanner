@@ -8,8 +8,8 @@ const create = async (information) => {
 };
 const isSaved = async (userId, dishId) => {
   const token = getConfig();
-  const response = await axios.get(`${baseUrl}/${userId}/${dishId}`,  token) 
-  return response.status === 200;
+  const response = await axios.get(`${baseUrl}/${userId}/${dishId}`,  token)
+  return response.data.isSaved
 }
 const getAll = async (
   userId,

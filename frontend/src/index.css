@@ -45,6 +45,18 @@
   transform: translateX(-50%);
   width: 80%;
 }
+.custom-modal {
+  max-width: 75vw;
+  width: 75vw;
+}
+.modal-backdrop {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
 
 
 

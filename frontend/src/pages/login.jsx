@@ -4,6 +4,7 @@ import Form from "react-bootstrap/Form";
 import loginService from "../services/login";
 import { useAuthStore, useNotificationStore } from "../stores";
 import { setToken } from "../services/token";
+import {useState} from "react";
 const LoginForm = () => {
   const {
     register,
@@ -11,18 +12,20 @@ const LoginForm = () => {
     formState: { errors },
   } = useForm();
   //state for notification and logged in user
+  const [isLoading, setIsLoading] = useState(false);
   const showNotification = useNotificationStore(
     (state) => state.showNotification
   );
   const setUser = useAuthStore((state) => state.setUser);
   //onsubmit
   const handleLogin = async (data) => {
+    setIsLoading(true);
     try {
       const user = await loginService.login(data);
       setUser(user);
       setToken(user.token);
       localStorage.setItem("loggedUser", JSON.stringify(user));
-      showNotification("Login successfully", "redirecting", "success");
+      showNotification("Login successfully", "redirect to homepage", "success");
     } catch (error) {
       console.log(error);
       showNotification(
@@ -30,6 +33,8 @@ const LoginForm = () => {
         Object.values(error.response.data)[0],
         "danger"
       );
+    } finally {
+      setIsLoading(false);
     }
   };
   return (
@@ -83,8 +88,9 @@ const LoginForm = () => {
               variant='primary'
               type='submit'
               className='btn btn-primary w-100 rounded-5'
+              disabled={isLoading}
             >
-              <i className='bi bi-box-arrow-in-right'></i> Log in
+              <i className='bi bi-box-arrow-in-right'></i> {isLoading ? 'Checking credentials...':  'Log in'}
             </Button>
           </Col>
         </Row>

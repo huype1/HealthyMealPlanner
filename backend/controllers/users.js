@@ -4,6 +4,7 @@ const { User, UserAllergy, Dish, DishAllergy } = require("../models");
 const { sequelize } = require("../utils/db");
 const { Op, where } = require("sequelize");
 const { userFinder, tokenValidate, isAdmin } = require("../utils/middleware");
+const {calculateTargetCalories} = require("../utils/calculateMealPlan");
 //user specific function
 
 router.post("/", async (req, res) => {
@@ -64,6 +65,7 @@ router.put("/:id", tokenValidate, userFinder, async (req, res) => {
         weightGoal,
         targetCalories,
         UserAllergies,
+        infoCompleted
       } = req.body;
       const allergies = UserAllergies.map(al => al.allergy);
       const user = await User.findByPk(req.params.id, { transaction });
@@ -75,6 +77,8 @@ router.put("/:id", tokenValidate, userFinder, async (req, res) => {
       user.activityLevel = activityLevel;
       user.weightGoal = weightGoal;
       user.targetCalories = targetCalories;
+      user.infoCompleted = infoCompleted
+      user.targetCalories = calculateTargetCalories(user);
 
       await user.save({ transaction });
 
@@ -98,6 +102,7 @@ router.put("/:id", tokenValidate, userFinder, async (req, res) => {
       res.json({ ...user.toJSON(), UserAllergies: objectAllergies });
     } catch (error) {
       await transaction.rollback();
+      console.log(error)
       res.status(500).json({ error: error.message });
     }
   } else {

@@ -62,6 +62,29 @@ Dish.init(
     dishType: {
       type: DataTypes.ENUM("main", "snack"),
     },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "users",
+        key: "id",
+      },
+      onDelete: "CASCADE",
+    },
+    averageRating: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+      validate: {
+        min: 0,
+        max: 5,
+      },
+    },
+    ratings: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    }
   },
   {
     sequelize,

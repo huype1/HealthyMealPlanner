@@ -5,16 +5,14 @@ import { useAuthStore } from "../stores";
 import { useEffect } from "react";
 
 const Navigation = () => {
-  const navigate = useNavigate(); // React hook to handle navigation
+  const navigate = useNavigate();
 
   const { user, clearUser } = useAuthStore();
   const handleLogout = async () => {
     try {
       await logoutService.logout();
       clearUser();
-      // Remove currentUser from localStorage
       localStorage.removeItem("loggedUser");
-      // Redirect the user to the login page
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error.message);

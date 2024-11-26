@@ -164,39 +164,51 @@ router.get("/:id", async (req, res) => {
 
 router.put("/:id", tokenValidate, async (req, res) => {
   const transaction = await sequelize.transaction();
-  const {  DishAllergies, ...newDishData } = req.body;
-  const allergies = DishAllergies?DishAllergies.map(allergy => allergy.allergy): []
-  const dish = await Dish.findByPk(req.params.id, { transaction });
-  if (!dish) {
-    return res.status(404).json({ error: "Dish not found" });
-  } else {
-    try {
-      await dish.update(newDishData, { transaction });
-      if (allergies && allergies.length) {
-        await DishAllergy.destroy({
-          where: { dishId: dish.id },
-          transaction,
-        });
+  const { DishAllergies, ...newDishData } = req.body;
 
-        const allergyPromises = allergies.map((allergy) =>
-          DishAllergy.create({ dishId: dish.id, allergy }, { transaction })
-        );
-        await Promise.all(allergyPromises);
-      }
+  const filteredDishData = Object.fromEntries(
+    Object.entries(newDishData).filter(
+      ([_, value]) => value !== undefined && value !== ""
+    )
+  );
 
-      const objectAllergies = allergies
-        ? allergies.map((allergy) => ({ allergy }))
-        : [];
+  const allergies = DishAllergies
+    ? DishAllergies.map((allergy) => allergy.allergy)
+    : [];
 
-      await transaction.commit();
-      res.json({ ...dish.toJSON(), UserAllergies: objectAllergies });
-    } catch (error) {
-      await transaction.rollback();
-      console.error(error);
-      res.status(500).json({ error: error.message });
+  try {
+    const dish = await Dish.findByPk(req.params.id, { transaction });
+    if (!dish) {
+      return res.status(404).json({ error: "Dish not found" });
     }
+
+    await dish.update(filteredDishData, { transaction });
+
+    if (allergies && allergies.length) {
+      await DishAllergy.destroy({
+        where: { dishId: dish.id },
+        transaction,
+      });
+
+      const allergyPromises = allergies.map((allergy) =>
+        DishAllergy.create({ dishId: dish.id, allergy }, { transaction })
+      );
+      await Promise.all(allergyPromises);
+    }
+
+    const objectAllergies = allergies
+      ? allergies.map((allergy) => ({ allergy }))
+      : [];
+
+    await transaction.commit();
+    res.json({ ...dish.toJSON(), UserAllergies: objectAllergies });
+  } catch (error) {
+    await transaction.rollback();
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
 });
+
 
 router.delete("/:id", tokenValidate, async (req, res) => {
   const transaction = await sequelize.transaction();

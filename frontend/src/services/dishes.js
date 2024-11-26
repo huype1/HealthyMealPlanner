@@ -46,12 +46,12 @@ const get = async (id) => {
 };
 const update = async (data) => {
   try {
+    console.log(data)
     const response = await axios.put(
       `${baseUrl}/${data.id}`,
       data,
       getConfig()
     );
-    console.log(response)
     return response.data;
   } catch (error) {
     console.log(error.message);

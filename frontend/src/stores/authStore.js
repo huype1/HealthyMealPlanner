@@ -7,7 +7,7 @@ const initUserFromStorage = () => {
     const storageUser = JSON.parse(loggedUserJSON);
     return storageUser;
   }
-  return { id: null, userName: null, status: null, token: null, infoCompleted: false };
+  return { userId: null, userName: null, status: null, token: null, infoCompleted: false };
 };
 
 export const useAuthStore = create((set) => ({
@@ -16,6 +16,6 @@ export const useAuthStore = create((set) => ({
     set({ user });
   },
   clearUser: () => {
-    set({ user: { id: null, userName: null, status: null, token: null, infoCompleted: false } });
+    set({ user: { userId: null, userName: null, status: null, token: null, infoCompleted: false } });
   },
 }));

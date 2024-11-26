@@ -50,7 +50,7 @@ const RegisterForm = () => {
         localStorage.setItem("loggedUser", JSON.stringify(newUser));
         showNotification(
           "create account succesfully",
-          "redirect to homepage",
+          "redirect",
           "success"
         );
         navigate("/");

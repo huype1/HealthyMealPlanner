@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Form, Row, Col, Button, Collapse } from "react-bootstrap";
 
-const DishesFilter = ({ filters, setFilters }) => {
+const DishesFilter = ({ filters, setFilters, inModal=false }) => {
   const [open, setOpen] = useState(false);
 
   const handleChange = (e) => {
@@ -38,7 +38,7 @@ const DishesFilter = ({ filters, setFilters }) => {
     });
   };
   return (
-    <Form className='mb-4 w-75 mx-auto'>
+    <Form className={`${inModal ? ' w-100 mb-0' : 'mb-4 w-75'} mx-auto`}>
       <Row className='mb-3'>
         <Col sm={8}>
           <Form.Group controlId='name'>
@@ -68,12 +68,12 @@ const DishesFilter = ({ filters, setFilters }) => {
           </Button>
         </Col>
 
-        <Row className='my-2'>
-          <Col sm={12}>
-            <Button href='/dish/create' variant='primary' className="me-2 mb-2 ">
+        <Row>
+          <Col sm={12} className={`${inModal ? 'mb-0' : 'mb-2'}`}>
+            <Button href='/dish/create' variant='primary' className="me-2">
               <i className="bi bi-plus-square"></i> Create New Dish
             </Button>
-            <Button variant='secondary' onClick={handleReset} className="mb-2 ">
+            <Button variant='secondary' onClick={handleReset}>
               Reset All Filters
             </Button>
           </Col>
@@ -161,9 +161,6 @@ const DishesFilter = ({ filters, setFilters }) => {
                 </Form.Select>
               </Form.Group>
             </Col>
-            {/* <Col sm={6} md={4}>
-              <Form.Check type='switch' label='My own dishes' 
-            </Col> */}
           </Row>
 
           <Row className='mb-3'>

@@ -49,12 +49,11 @@ const UserPage = () => {
   };
   const handleConfirm = async () => {
     try {
-      await logoutService.logout();
-      clearUser();
       await usersService.remove(id);
+      navigate("/");
       localStorage.removeItem("loggedUser");
+      clearUser();
       setShowModal(false);
-      navigate("/register");
     } catch (error) {
       console.error(error);
     }

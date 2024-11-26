@@ -1,24 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { Container, Row, Col, Form, Button, Image } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
+import {useEffect, useState} from "react";
+import {useForm} from "react-hook-form";
+import {Container, Row, Col, Form, Button, Image} from "react-bootstrap";
+import {useNavigate, useParams} from "react-router-dom";
 import dishesService from "../services/dishes";
-import { useAuthStore, useNotificationStore } from "../stores";
+import {useAuthStore, useNotificationStore} from "../stores";
+import {handleImageUpload} from "../services/supabaseClient.js";
+
 const DishForm = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
-  const { user } = useAuthStore();
-  let creatorId = null;
+  const {id} = useParams();
+  const {user} = useAuthStore();
   const isEditMode = Boolean(id);
   const [isLoading, setIsLoading] = useState(false);
   const showNotification = useNotificationStore(
     (state) => state.showNotification
   );
 
-  const { register, handleSubmit, setValue, getValues, watch } = useForm({
+  const {register, handleSubmit, setValue, getValues, watch} = useForm({
     defaultValues: {
       name: "",
       imageUrl: "",
+      imageFile: null,
       recipeUrl: "",
       calories: "",
       protein: "",
@@ -32,6 +34,7 @@ const DishForm = () => {
   });
 
   const imageUrl = watch("imageUrl");
+  const imageFile = watch("imageFile"); // Watch for the selected image file
 
   const dietOptions = [
     "vegan",
@@ -72,7 +75,7 @@ const DishForm = () => {
             "redirect to dishes",
             "danger"
           );
-          navigate("/dishes", { replace: true });
+          navigate("/dishes", {replace: true});
           return;
         }
 
@@ -84,8 +87,9 @@ const DishForm = () => {
           setValue("allergies", dish.DishAllergies.map((da) => da.allergy));
         }
       } catch (error) {
+        console.log(error)
         showNotification("Cannot load dish", "redirect to dishes", "danger");
-        navigate("/dishes", { replace: true });
+        navigate("/dishes", {replace: true});
       }
     };
 
@@ -105,18 +109,33 @@ const DishForm = () => {
     setValue("allergies", newAllergies);
   };
 
+
+
+
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
+      let imageUrl = data.imageUrl;
+      if (data.imageFile?.[0]) {
+        imageUrl = await handleImageUpload(data.imageFile[0], user.userId);
+      }
+
       const numericData = {
         ...data,
+        imageUrl,
         calories: data.calories ? parseInt(data.calories) : null,
         protein: data.protein ? parseFloat(data.protein) : null,
         fat: data.fat ? parseFloat(data.fat) : null,
         carb: data.carb ? parseFloat(data.carb) : null,
-        DishAllergies: data.allergies.map((allergy) => ({ allergy })),
+        averageRating: data.averageRating ? parseFloat(data.averageRating) : 0,
+        ratings: data.ratings ? parseInt(data.ratings) : 0,
+        DishAllergies: data.allergies.map((allergy) => ({allergy})),
+        userId: user.userId,
       };
+
+      delete numericData.imageFile;
       delete numericData.allergies;
+
       if (isEditMode) {
         await dishesService.update(numericData);
       } else {
@@ -126,10 +145,12 @@ const DishForm = () => {
       navigate("/dishes");
     } catch (error) {
       showNotification("Cannot save dish", "Please try again later", "danger");
+      console.log(error);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <Container className='py-4'>
@@ -145,35 +166,41 @@ const DishForm = () => {
         <Row className='g-4'>
           <Col lg={4}>
             <div
-              className='border rounded mb-3 d-flex align-items-center justify-content-center bg-light'
-              style={{ height: "300px", overflow: "hidden" }}
+              className="border rounded mb-3 d-flex align-items-center justify-content-center bg-light"
+              style={{height: "300px", overflow: "hidden"}}
             >
-              {imageUrl ? (
+              {imageFile?.[0] ? (
+                <Image
+                  src={URL.createObjectURL(imageFile[0])}
+                  alt="Dish preview"
+                  className="img-fluid"
+                  style={{objectFit: "cover", width: "100%", height: "100%"}}
+                />
+              ) : imageUrl ? (
                 <Image
                   src={imageUrl}
-                  alt='Dish preview'
-                  className='img-fluid'
-                  style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                  alt="Dish preview"
+                  className="img-fluid"
+                  style={{objectFit: "cover", width: "100%", height: "100%"}}
                 />
               ) : (
-                <div className='text-center p-4'>
-                  <i className='bi bi-image h1'></i>
-                  <p className='text-muted mb-0'>No image</p>
+                <div className="text-center p-4">
+                  <i className="bi bi-image h1"></i>
+                  <p className="text-muted mb-0">No image</p>
                 </div>
               )}
             </div>
 
-            <Form.Group className='mb-3'>
-              <Form.Label>Image URL</Form.Label>
+            <Form.Group className="mb-3">
+              <Form.Label>Upload Image</Form.Label>
               <Form.Control
-                type='url'
-                {...register("imageUrl")}
-                placeholder='https://example.com/image.jpg'
+                type="file"
+                accept="image/*"
+                {...register("imageFile")}
               />
             </Form.Group>
           </Col>
 
-          {/* Form Fields Column */}
           <Col lg={8}>
             <Row>
               <Col md={6}>
@@ -181,7 +208,7 @@ const DishForm = () => {
                   <Form.Label>Name *</Form.Label>
                   <Form.Control
                     type='text'
-                    {...register("name", { required: true })}
+                    {...register("name", {required: true})}
                   />
                 </Form.Group>
 
@@ -243,7 +270,7 @@ const DishForm = () => {
               <Col md={6}>
                 <Form.Group className='mb-3'>
                   <Form.Label>Diet *</Form.Label>
-                  <Form.Select {...register("diet", { required: true })}>
+                  <Form.Select {...register("diet", {required: true})}>
                     <option value=''>Select Diet</option>
                     {dietOptions.map((option) => (
                       <option key={option} value={option}>
@@ -255,7 +282,7 @@ const DishForm = () => {
 
                 <Form.Group className='mb-3'>
                   <Form.Label>Cuisine *</Form.Label>
-                  <Form.Select {...register("cuisine", { required: true })}>
+                  <Form.Select {...register("cuisine", {required: true})}>
                     <option value=''>Select Cuisine</option>
                     {cuisineOptions.map((option) => (
                       <option key={option} value={option}>
@@ -267,7 +294,7 @@ const DishForm = () => {
 
                 <Form.Group className='mb-3'>
                   <Form.Label>Dish Type *</Form.Label>
-                  <Form.Select {...register("dishType", { required: true })}>
+                  <Form.Select {...register("dishType", {required: true})}>
                     <option value=''>Select Dish Type</option>
                     {dishTypeOptions.map((option) => (
                       <option key={option} value={option}>

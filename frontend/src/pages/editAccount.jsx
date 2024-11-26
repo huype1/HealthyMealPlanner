@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import UserInfoForm from "../components/userInfo";
 import { Container, Alert } from "react-bootstrap";
-import { useAuthStore } from "../stores";
+import { useAuthStore, useNotificationStore } from "../stores";
 import usersService from "../services/users";
 const AccountEditPage = () => {
   const { user } = useAuthStore();
+  const {showNotification} = useNotificationStore();
   const [userInfo, setUserInfo] = useState(null);
   const navigate = useNavigate();
-  const [error, setError] = useState("");
   useEffect(() => {
     usersService
       .get(user.userId)
@@ -17,22 +17,17 @@ const AccountEditPage = () => {
   }, [user, setUserInfo]);
   const handleSubmit = async (data) => {
     try {
-      // const updatedUser = await updateUserInfo(user.id, data);
-
-      navigate("/");
+      const updatedUser = await usersService.update(user.userId, {infoCompleted: true, ...data});
+      console.log(updatedUser)
+      showNotification('Update profile successfully', `user updated`, 'success');
     } catch (error) {
-      setError("Failed to update profile. Please try again.");
-      console.error("Error updating user info:", error);
+      showNotification('Failed to update profile', 'Please try again', 'danger');
+      console.error('Error updating user info:', error);
     }
   };
 
   return (
     <Container>
-      {error && (
-        <Alert variant='danger' className='mt-3'>
-          {error}
-        </Alert>
-      )}
       <UserInfoForm user={userInfo} onSubmit={handleSubmit} isEdit={true} />
     </Container>
   );

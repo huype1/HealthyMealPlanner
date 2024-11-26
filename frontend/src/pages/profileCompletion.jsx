@@ -17,11 +17,10 @@ const ProfileCompletion = () => {
 
   const handleSubmit = async (data) => {
     try {
-      const updatedUser = await usersService.update(user.userId, data);
-      console.log(updatedUser)
-      showNotification('Update profile successfully', `user updated`, 'success');
+      const updatedUser = await usersService.update(user.userId, {infoCompleted: true, ...data});
       localStorage.setItem('loggedUser', JSON.stringify({...user, infoCompleted: true}))
       navigate('/');
+      showNotification('Update profile successfully', `user updated`, 'success');
     } catch (error) {
       showNotification('Failed to update profile', 'Please try again', 'danger');
       console.error('Error updating user info:', error);

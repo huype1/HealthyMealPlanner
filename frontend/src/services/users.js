@@ -34,11 +34,12 @@ const status = async (newStatus, id) => {
   return response.data;
 };
 const update = async (id, data) => {
+  const token = getConfig();
   try {
     const response = await axios.put(
       `${baseUrl}/${id}`,
       data,
-      getConfig()
+      token
     );
     return response.data;
   } catch (error) {
