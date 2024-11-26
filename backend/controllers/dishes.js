@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { Dish, DishAllergy, User } = require("../models");
+const {Dish, DishAllergy, User, UserAllergy} = require("../models");
 const { sequelize } = require("../utils/db");
 const { Op } = require("sequelize");
 const { tokenValidate } = require("../utils/middleware");

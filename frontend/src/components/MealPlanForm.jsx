@@ -6,6 +6,8 @@ import {Badge, Button, Card, Col, Form, ListGroup, Row} from "react-bootstrap";
 import PieChartComponent from "./PieChartCustom.jsx";
 import AddDishesModal from "./AddDishesModal.jsx";
 import mealPlanService from "../services/mealPlans.js";
+import axios from "axios";
+import {getConfig} from "../services/token.js";
 //helper function
 const calculateMealPlanDetails = (dishes) => {
   let totalCalories = 0;
@@ -91,6 +93,11 @@ const MealPlanForm = () => {
     setValue("dishes", [...updatedDishes]);
     updateMealPlanDetails(updatedDishes);
   };
+  const handleSuggestion = async () => {
+    const suggestedDishes = await axios.get("http://localhost:3001/api/suggest", getConfig());
+    setValue("dishes", suggestedDishes.data)
+    updateMealPlanDetails(suggestedDishes.data)
+  }
 
   const dietOptions = ["vegan", "vegetarian", "keto", "high-protein", "low-fat", "low-carb", "balanced", "high-fiber"];
   const onSubmit = async (data) => {
@@ -161,7 +168,10 @@ const MealPlanForm = () => {
                           className='custom-input'
                           {...register("description", {required: false})}/>
           </Form.Group>
-          <Button variant='primary' className="mb-2" onClick={() => setShowAddDishesModal(true)}>Add dishes</Button>
+          <div className="flex d-flex mb-2 gap-1">
+            <Button variant='primary' onClick={() => setShowAddDishesModal(true)}>Add dishes</Button>
+            <Button variant='secondary' onClick={handleSuggestion}>Add suggested dish</Button>
+          </div>
 
           <div>
             {dishes.map((detail) => (<div

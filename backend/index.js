@@ -23,6 +23,7 @@ const saveDishRouter = require("./controllers/save_dishes");
 const mealPlanRouter = require("./controllers/meal_plans");
 const commentRouter = require("./controllers/dish_comments")
 const recipeRouter = require("./controllers/recipes")
+const suggestRouter = require("./controllers/suggest")
 
 app.use(express.json());
 app.use(morgan("tiny"));
@@ -36,6 +37,7 @@ app.use("/api/save-dish", saveDishRouter);
 app.use("/api/meal-plans", mealPlanRouter);
 app.use("/api/comments", commentRouter);
 app.use("/api/recipes", recipeRouter);
+app.use("/api/suggest", suggestRouter)
 
 app.use(unknownEndpoint);
 app.use(errorHandler);
