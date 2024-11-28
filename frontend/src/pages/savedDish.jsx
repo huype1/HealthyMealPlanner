@@ -25,7 +25,6 @@ const SavedDishesPage = () => {
   const fetchDishes = async (id) => {
     try {
       const result = await savedDishesService.getAll(
-        currUser.userId,
         filters.diet,
         filters.allergies,
         filters.name,
@@ -33,7 +32,8 @@ const SavedDishesPage = () => {
         filters.maxCalories,
         filters.dishType,
         filters.cuisine,
-        currentPage
+        currentPage,
+        8
       );
       setDisplayedDishes(result.dishes);
       setTotalPages(result.totalPages)

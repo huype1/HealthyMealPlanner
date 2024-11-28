@@ -35,9 +35,9 @@ router.get("/:userId/:dishId", async (req, res) => {
   }
 });
 
-router.get("/:userId", tokenValidate, async (req, res) => {
+router.get("/", tokenValidate, async (req, res) => {
   try {
-    const {userId} = req.params;
+    const userId = req.decodedToken.id;
     const {
       diet,
       allergies,

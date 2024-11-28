@@ -3,16 +3,20 @@ import DishesFilter from "./DishesFilter.jsx";
 import React, {useEffect, useRef, useState} from "react";
 import debounce from "lodash/debounce.js";
 import dishesService from "../services/dishes.js";
-import CustomSpinner from "./CustomSpinner.jsx";;
+import CustomSpinner from "./CustomSpinner.jsx";
+
+;
 import Pagination from "./Pagination.jsx";
 import PieChartComponent from "./PieChartCustom.jsx";
 import {useNotificationStore} from "../stores/index.js";
+import savedDishesService from "../services/savedDishes.js";
 
 const AddDishesModal = ({show, handleClose, handleAddDish}) => {
   const [dishes, setDishes] = useState(null);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [servings, setServings] = useState(1);
+  const [savedList, setSavedList] = useState(false);
 
   const [filters, setFilters] = useState({
     name: "",
@@ -24,24 +28,40 @@ const AddDishesModal = ({show, handleClose, handleAddDish}) => {
     cuisine: "",
   });
   const [selectedDish, setSelectedDish] = useState(null);
-  const { showNotification } = useNotificationStore();
+  const {showNotification} = useNotificationStore();
 
   const isInitialRender = useRef(true);
 
   const previousFilters = useRef(filters);
 
   const debouncedfetchDishes = debounce(async () => {
-    const result = await dishesService.getAll(
-      filters.diet,
-      filters.allergies,
-      filters.name,
-      filters.minCalories,
-      filters.maxCalories,
-      filters.dishType,
-      filters.cuisine,
-      currentPage,
-      5
-    );
+    let result = []
+    if (savedList) {
+      result = await savedDishesService.getAll(
+        filters.diet,
+        filters.allergies,
+        filters.name,
+        filters.minCalories,
+        filters.maxCalories,
+        filters.dishType,
+        filters.cuisine,
+        currentPage,
+        5
+      );
+    } else {
+      result = await dishesService.getAll(
+        filters.diet,
+        filters.allergies,
+        filters.name,
+        filters.minCalories,
+        filters.maxCalories,
+        filters.dishType,
+        filters.cuisine,
+        currentPage,
+        5
+      );
+    }
+
     setDishes(result.dishes);
     setTotalPages(result.totalPages);
   }, 200);
@@ -64,12 +84,11 @@ const AddDishesModal = ({show, handleClose, handleAddDish}) => {
 
   useEffect(() => {
     debouncedfetchDishes();
-  }, [filters, currentPage]);
+  }, [filters, currentPage, savedList]);
   if (!dishes) {
     if (show) {
       return <CustomSpinner/>;
-    }
-    else {
+    } else {
       return null;
     }
   }
@@ -77,13 +96,17 @@ const AddDishesModal = ({show, handleClose, handleAddDish}) => {
     <Modal dialogClassName="custom-modal" show={show} onHide={handleClose}>
 
       <Modal.Header className={'m-0 p-0'}>
-        <Button variant='white' onClick={handleClose} >
+        <Button variant='white' onClick={handleClose}>
           <i className="bi bi-x-lg" style={{color: 'red'}}></i>
         </Button>
       </Modal.Header>
       <Modal.Body style={{maxHeight: "85vh", overflowY: "auto"}}>
         <Row>
           <Col md={12} lg={6} style={{overflowY: 'scroll'}}>
+            <input type='checkbox' className='border border-secondary rounded-2' onClick={() => {
+              console.log(savedList)
+              setSavedList(!savedList)
+            }}/>&nbsp;Your saved dishes
             <DishesFilter filters={filters} setFilters={setFilters} inModal={true}/>
             {dishes.length > 0 &&
               dishes.map((dish) => (
@@ -180,14 +203,14 @@ const AddDishesModal = ({show, handleClose, handleAddDish}) => {
                             min={0}
                             value={servings}
                             onChange={(e) => setServings(parseFloat(e.target.value))}
-                            style={{ width: "100px" }}
+                            style={{width: "100px"}}
                           />
                         </ListGroup.Item>
                         <ListGroup.Item className="d-flex justify-content-between align-items-center">
                           <Button
                             variant="primary"
                             onClick={() => {
-                              handleAddDish({dish: selectedDish,servings});
+                              handleAddDish({dish: selectedDish, servings});
                               showNotification(
                                 "Success",
                                 "Add dish to meal plan successfully",

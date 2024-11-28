@@ -12,7 +12,6 @@ const isSaved = async (userId, dishId) => {
   return response.data.isSaved
 }
 const getAll = async (
-  userId,
   diet,
   allergies,
   name,
@@ -37,7 +36,7 @@ const getAll = async (
   params.append('limit', limit);
 
   // Make GET request with query parameters
-  const response = await axios.get(`${baseUrl}/${userId}?${params.toString()}`, token);
+  const response = await axios.get(`${baseUrl}/?${params.toString()}`, token);
   console.log(response.data)
   return response.data;
 };
