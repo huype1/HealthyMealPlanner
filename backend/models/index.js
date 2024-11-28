@@ -19,6 +19,22 @@ Dish.belongsTo(User, {
   onDelete: 'CASCADE',
 });
 
+SavedDish.belongsTo(Dish, {
+  foreignKey: 'dishId',
+  onDelete: 'CASCADE',
+});
+
+Dish.hasMany(SavedDish, {
+  foreignKey: 'dishId',
+});
+SavedDish.belongsTo(User, {
+  foreignKey: 'userId',
+  onDelete: 'CASCADE',
+});
+
+User.hasMany(SavedDish, {
+  foreignKey: 'userId',
+});
 Dish.hasMany(DishAllergy);
 DishAllergy.belongsTo(Dish);
 

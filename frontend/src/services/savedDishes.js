@@ -23,13 +23,12 @@ const getAll = async (
   page = 1,
   limit = 8
 ) => {
-  // Construct query parameters dynamically
   const token = getConfig();
   const params = new URLSearchParams();
 
   if (name) params.append('name', name);
   if (diet) params.append('diet', diet);
-  if (allergies && allergies.length > 0) params.append('allergies', allergies.join(',')); // Join allergies array
+  if (allergies && allergies.length > 0) params.append('allergies', allergies.join(','));
   if (minCalories) params.append('minCalories', minCalories);
   if (maxCalories) params.append('maxCalories', maxCalories);
   if (mealType) params.append('mealType', mealType);
@@ -39,6 +38,7 @@ const getAll = async (
 
   // Make GET request with query parameters
   const response = await axios.get(`${baseUrl}/${userId}?${params.toString()}`, token);
+  console.log(response.data)
   return response.data;
 };
 

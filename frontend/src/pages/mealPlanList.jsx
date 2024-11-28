@@ -33,7 +33,7 @@ const MealPlanList = () => {
     console.log(result);
     setMealPlans(result.mealPlans);
     setTotalPages(result.totalPages);
-  }, 500);
+  }, 200);
 
   useEffect(() => {
     debouncedfetchPlans();
@@ -160,7 +160,8 @@ const MealPlanList = () => {
                 className='mb-2 d-flex justify-content-between align-items-center'>
                 <h3 className='mb-0' onClick={() => navigate(`/meal-plan/${plan.id}`)}>{plan.name}</h3>
                 <Button onClick={() => setTried(plan.id)} disabled={plan.haveTried} variant='white'>
-                  {plan.haveTried ? <i className="bi bi-check-square" style={{color: 'green'}}></i> : <i className="bi bi-square"></i>}
+                  {plan.haveTried ? <i className="bi bi-check-lg" style={{color: 'green'}}></i> :
+                    <i className="bi bi-square"></i>}
                 </Button>
               </div>
               <div onClick={() => navigate(`/meal-plan/${plan.id}`)}className='mb-2 d-flex align-items-center gap-2'>

@@ -36,8 +36,7 @@ const DishesPage = () => {
     console.log(result);
     setDishes(result.dishes);
     setTotalPages(result.totalPages);
-  }, 500);
-
+  }, 200);
   useEffect(() => {
     debouncedfetchDishes();
   }, [currentPage, filters]);

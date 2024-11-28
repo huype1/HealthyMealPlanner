@@ -71,7 +71,7 @@ const AdminPage = () => {
         );
         navigate('/')
       });
-  }, 500);
+  }, 200);
   useEffect(() => {
     debouncedFetchUsers();
   }, [currentPage, searchQuery, searchGroup, usersService]);

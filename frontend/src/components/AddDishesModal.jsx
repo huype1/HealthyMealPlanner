@@ -1,6 +1,6 @@
 import {Button, Card, Col, ListGroup, Modal, Row} from "react-bootstrap";
 import DishesFilter from "./DishesFilter.jsx";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import debounce from "lodash/debounce.js";
 import dishesService from "../services/dishes.js";
 import CustomSpinner from "./CustomSpinner.jsx";;
@@ -25,6 +25,11 @@ const AddDishesModal = ({show, handleClose, handleAddDish}) => {
   });
   const [selectedDish, setSelectedDish] = useState(null);
   const { showNotification } = useNotificationStore();
+
+  const isInitialRender = useRef(true);
+
+  const previousFilters = useRef(filters);
+
   const debouncedfetchDishes = debounce(async () => {
     const result = await dishesService.getAll(
       filters.diet,
@@ -39,12 +44,27 @@ const AddDishesModal = ({show, handleClose, handleAddDish}) => {
     );
     setDishes(result.dishes);
     setTotalPages(result.totalPages);
-  }, 500);
+  }, 200);
+
+  useEffect(() => {
+    const hasFilterChanged = Object.keys(filters).some(
+      key => filters[key] !== previousFilters.current[key]
+    );
+
+    if (!isInitialRender.current && hasFilterChanged) {
+      setCurrentPage(1);
+    }
+
+    previousFilters.current = filters;
+
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+    }
+  }, [filters]);
 
   useEffect(() => {
     debouncedfetchDishes();
-  }, [currentPage, filters]);
-
+  }, [filters, currentPage]);
   if (!dishes) {
     if (show) {
       return <CustomSpinner/>;
