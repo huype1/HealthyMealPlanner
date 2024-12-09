@@ -57,6 +57,10 @@
   left: 0;
 }
 
-
+.modal-image {
+  width: 75vw;
+  height: auto;
+  object-fit: cover;
+}
 
 

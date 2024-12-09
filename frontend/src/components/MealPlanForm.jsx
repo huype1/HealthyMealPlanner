@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
-import { useNotificationStore} from "../stores/index.js";
+import {useAuthStore, useNotificationStore} from "../stores/index.js";
 import {useForm} from "react-hook-form";
 import {Badge, Button, Card, Col, Form, ListGroup, Row} from "react-bootstrap";
 import PieChartComponent from "./PieChartCustom.jsx";
@@ -8,6 +8,7 @@ import AddDishesModal from "./AddDishesModal.jsx";
 import mealPlanService from "../services/mealPlans.js";
 import axios from "axios";
 import {getConfig} from "../services/token.js";
+import usersService from "../services/users.js";
 //helper function
 const calculateMealPlanDetails = (dishes) => {
   let totalCalories = 0;
@@ -32,8 +33,10 @@ const calculateMealPlanDetails = (dishes) => {
 const MealPlanForm = () => {
   const navigate = useNavigate()
   const {id} = useParams();
+  const [userData, setUserData] = useState(null);
   const [showAddDishesModal, setShowAddDishesModal] = useState(false);
   const showNotification = useNotificationStore((state) => state.showNotification);
+  const {user} = useAuthStore();
   const {register, handleSubmit, setValue, getValues, watch} = useForm({
     defaultValues: {
       name: "",
@@ -53,6 +56,19 @@ const MealPlanForm = () => {
   const totalProtein = watch('totalProtein')
   const dishes = watch("dishes");
   const allergies = watch("allergies")
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const result = await usersService.get(user.userId);
+        console.log(result);
+        setUserData(result);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+    fetchUserData();
+  }, [user.userId]);
 
   const updateMealPlanDetails = (dishes) => {
     const updatedDetails = calculateMealPlanDetails(dishes);
@@ -236,6 +252,15 @@ const MealPlanForm = () => {
 
         {totalCalories && totalCarbs && totalProtein && totalFat ? <Col lg={6} md={5} sm={12} xs={12}>
           <Card>
+            <Card.Header>
+              <h1>Target goals</h1>
+              {userData.targetCalories ?
+                parseInt(userData.targetCalories - totalCalories) > 0
+                  ? <h2 className="text-success">{userData.targetCalories - totalCalories} left</h2>
+                  : <h2 className="text-danger">{(userData.targetCalories - totalCalories) * -1} over</h2>
+                : null
+              }
+            </Card.Header>
             <Card.Body>
               <div className='d-flex justify-content-center mb-2'>
                 <PieChartComponent

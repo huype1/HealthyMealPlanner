@@ -272,15 +272,19 @@ const CommentSection = ({dishId, reloadDish}) => {
   return (
     <>
       <h3>Comments</h3>
-      {
-        user.userId !== null &&userComment && !isEditing ? (
-          renderUserComment()
-        ) : <Button variant="primary" onClick={() => navigate('/login')}>
+      {user.userId === null && (
+        <Button variant="primary" onClick={() => navigate('/login')}>
           Login to create your review
         </Button>
-      }
+      )}
 
-      {user.userId !== null && (!userComment || (isEditing && user.userId)) && renderForm()}
+      {user.userId !== null && (
+        <>
+          {userComment && !isEditing && renderUserComment()}
+          {(!userComment || isEditing) && renderForm()}
+        </>
+      )}
+
 
       <h3 className="text-xl font-semibold mb-3">All Reviews</h3>
       {comments.map(comment => {
@@ -318,13 +322,13 @@ const CommentSection = ({dishId, reloadDish}) => {
           </Card>
         )
       })}
-      <Modal show={showModal} onHide={() => setShowModal(false)} closeButton centered>
+      <Modal dialogClassName="custom-modal" show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Body>
           <Image
             src={imageLink}
             alt="Review"
             fluid
-            style={{width: 'fit-content'}}
+            className='modal-image'
           />
         </Modal.Body>
       </Modal>

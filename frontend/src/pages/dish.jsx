@@ -31,6 +31,7 @@ const DishInformation = () => {
   const [isSaved, setIsSaved] = useState(false);
   const {id} = useParams();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [servings, setServings] = useState(1);
   const fetchDishInfo = () => {
     dishesService.get(id).then((result) => {
       setDish(result);
@@ -141,20 +142,31 @@ const DishInformation = () => {
               </div>
               <ListGroup variant='flush'>
                 <ListGroup.Item className='d-flex justify-content-between align-items-center'>
+                  <strong>Servings:</strong>
+                  <input
+                    type="number"
+                    step={0.5}
+                    min={0}
+                    value={servings}
+                    onChange={(e) => setServings(parseFloat(e.target.value))}
+                    style={{width: "100px"}}
+                  />
+                </ListGroup.Item>
+                <ListGroup.Item className='d-flex justify-content-between align-items-center'>
                   <strong>Total Calories:</strong>
-                  <span>{dish.calories} kcal</span>
+                  <span>{parseInt(dish.calories * servings)} kcal</span>
                 </ListGroup.Item>
                 <ListGroup.Item className='d-flex justify-content-between align-items-center'>
                   <strong>Protein:</strong>
-                  <span>{dish.protein}g</span>
+                  <span>{(dish.protein * servings).toFixed(2)}g</span>
                 </ListGroup.Item>
                 <ListGroup.Item className='d-flex justify-content-between align-items-center'>
                   <strong>Fat:</strong>
-                  <span>{dish.fat}g</span>
+                  <span>{(dish.fat * servings).toFixed(2)}g</span>
                 </ListGroup.Item>
                 <ListGroup.Item className='d-flex justify-content-between align-items-center'>
                   <strong>Carbs:</strong>
-                  <span>{dish.carb}g</span>
+                  <span>{(dish.carb * servings).toFixed(2)}g</span>
                 </ListGroup.Item>
               </ListGroup>
             </Card.Body>
@@ -174,7 +186,7 @@ const DishInformation = () => {
                 fullSymbol={<i className="bi bi-star-fill" style={{color: "gold"}}></i>}
                 initialRating={dish.averageRating}
                 readonly
-                /> ({dish.ratings})
+              /> ({dish.ratings})
             </ListGroup.Item>
             <ListGroup.Item>
               <strong>Meal Type:</strong> {dish.dishType}
@@ -231,7 +243,7 @@ const DishInformation = () => {
         </Col>
       </Row>
       <Row>
-        <CommentSection dishId={dish.id} reloadDish={fetchDishInfo} />
+        <CommentSection dishId={dish.id} reloadDish={fetchDishInfo}/>
       </Row>
       <ConfirmationModal
         show={showDeleteModal}

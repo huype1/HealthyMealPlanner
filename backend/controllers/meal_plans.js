@@ -119,6 +119,7 @@ router.put("/:id", tokenValidate, async (req, res) => {
     isCalculated,
   } = req.body;
 
+  console.log(req.body)
   const { id } = req.params;
   const transaction = await sequelize.transaction();
 
@@ -135,7 +136,7 @@ router.put("/:id", tokenValidate, async (req, res) => {
     if (name !== undefined) mealPlan.name = name;
     if (description !== undefined) mealPlan.description = description;
     if (diet !== undefined) mealPlan.diet = diet;
-    if (haveTried !== undefined) mealPlan.haveTried = haveTried;
+    if (haveTried === true || haveTried === false) mealPlan.haveTried = haveTried;
 
     let calculatedCalories = totalCalories || mealPlan.totalCalories;
     let calculatedProtein = totalProtein || mealPlan.totalProtein;

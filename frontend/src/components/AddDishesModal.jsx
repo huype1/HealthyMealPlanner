@@ -1,4 +1,4 @@
-import {Button, Card, Col, ListGroup, Modal, Row} from "react-bootstrap";
+import {Button, Card, Col, ListGroup, ListGroupItem, Modal, Row} from "react-bootstrap";
 import DishesFilter from "./DishesFilter.jsx";
 import React, {useEffect, useRef, useState} from "react";
 import debounce from "lodash/debounce.js";
@@ -10,6 +10,7 @@ import Pagination from "./Pagination.jsx";
 import PieChartComponent from "./PieChartCustom.jsx";
 import {useNotificationStore} from "../stores/index.js";
 import savedDishesService from "../services/savedDishes.js";
+import RecipeStepsManager from "./RecipeStepsManager.jsx";
 
 const AddDishesModal = ({show, handleClose, handleAddDish}) => {
   const [dishes, setDishes] = useState(null);
@@ -221,6 +222,12 @@ const AddDishesModal = ({show, handleClose, handleAddDish}) => {
                             Add to Meal Plan
                           </Button>
                         </ListGroup.Item>
+                        <ListGroupItem className="d-flex justify-content-between align-items-center">
+                          <RecipeStepsManager
+                            dishId={selectedDish.id}
+                            isAuthor={false}
+                          />
+                        </ListGroupItem>
                       </ListGroup>
                     </Card.Body>
                   </Card>
